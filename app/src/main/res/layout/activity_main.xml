@@ -7,10 +7,10 @@
     tools:context=".MainActivity">
 
     <LinearLayout
+        android:id="@+id/tools"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:id="@+id/tools">
+        android:orientation="horizontal">
 
 
         <androidx.cardview.widget.CardView
@@ -124,9 +124,9 @@
     </LinearLayout>
 
     <EditText
-        android:layout_below="@+id/tools"
+        android:id="@+id/editText"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="start"
-        android:inputType="text" />
+        android:layout_below="@+id/tools"
+        android:gravity="start" />
 </RelativeLayout>
