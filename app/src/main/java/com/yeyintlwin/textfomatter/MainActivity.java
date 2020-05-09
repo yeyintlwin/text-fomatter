@@ -4,7 +4,6 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,16 +14,20 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, TextWatcher {
-    private final int[] BUTTONS = {R.id.bold_text, R.id.italic_text, R.id.underline_text, R.id.strike_through_text, R.id.super_script, R.id.sub_script};
+
+    private final int[] BUTTONS = {R.id.bold_text, R.id.italic_text, R.id.underline_text,
+            R.id.strike_through_text, R.id.super_script, R.id.sub_script};
     private EditText editText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         for (int id : BUTTONS) {
             findViewById(id).setOnClickListener(this);
         }
+
         editText = findViewById(R.id.editText);
         editText.setCustomSelectionActionModeCallback(new ActionMode.Callback() {
             @Override
@@ -66,9 +69,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (editText.hasSelection()) {
             int selectionStart = editText.getSelectionStart();
             int selectionEnd = editText.getSelectionEnd();
-            String selectedText = editText.getText().toString().substring(selectionStart, selectionEnd);
-            Log.d("SelectedText", selectedText);
+
+            // Original text
+            StringBuilder originalText = new StringBuilder(editText.getText());
+
+            // Selected-text extract from the original string
+            String selectedText = originalText.substring(selectionStart, selectionEnd);
+
+            // Format the extracted string
+            selectedText = getFormattedStr(selectedText);
+
+            // converted the formatted string push to the original string
+            originalText.replace(selectionStart, selectionEnd, selectedText);
+
+            // Update text to EditText
+            editText.setText(originalText.toString());
         }
+    }
+
+    private String getFormattedStr(String str) {
+        //TODO: 1st logic here.
+        return "apple, orange";
     }
 
     @Override
@@ -78,7 +99,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onTextChanged(CharSequence s, int start, int before, int count) {
-
+        //TODO: 2nd logic here.
     }
 
     @Override
