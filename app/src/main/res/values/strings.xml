@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">TextFomatter</string>
+    <string name="super_script">A²</string>
+    <string name="sub_script">A₂</string>
+    <string name="bold_text">𝗕</string>
+    <string name="italic_text">𝘐</string>
+    <string name="underline_text">U̲</string>
+    <string name="strike_through_text">S̶</string>
+</resources>
