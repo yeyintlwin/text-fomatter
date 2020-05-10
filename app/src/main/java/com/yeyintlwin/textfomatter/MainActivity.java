@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,6 +18,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private final int[] BUTTONS = {R.id.bold_text, R.id.italic_text, R.id.underline_text,
             R.id.strike_through_text, R.id.super_script, R.id.sub_script};
+
     private EditText editText;
 
     @Override
@@ -29,6 +31,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         editText = findViewById(R.id.editText);
+        editText.addTextChangedListener(this);
+
         editText.setCustomSelectionActionModeCallback(new ActionMode.Callback() {
             @Override
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
@@ -37,6 +41,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                // To remove the content menu that shown up when we selected the text from EditText
+                // which consist (select all, copy, cut, paste, etc,...) options.
                 menu.clear();
                 return false;
             }
@@ -52,19 +58,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
+
     }
 
     private boolean isActive(int id) {
         return ((TextView) findViewById(id)).getCurrentTextColor() == Color.BLUE;
     }
 
-    private void setColor(int id) {
+    private void setOnOffById(int id) {
         ((TextView) findViewById(id)).setTextColor(isActive(id) ? Color.BLACK : Color.BLUE);
     }
 
     @Override
     public void onClick(View v) {
-        setColor(v.getId());
+        setOnOffById(v.getId());
 
         if (editText.hasSelection()) {
             int selectionStart = editText.getSelectionStart();
@@ -77,19 +84,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             String selectedText = originalText.substring(selectionStart, selectionEnd);
 
             // Format the extracted string
-            selectedText = getFormattedStr(selectedText);
+            String formattedText = getFormattedStr(selectedText);
 
-            // converted the formatted string push to the original string
-            originalText.replace(selectionStart, selectionEnd, selectedText);
+            // The formatted string push to the original string
+            String newStr = originalText.replace(selectionStart, selectionEnd, formattedText).toString();
+
+            // to protect onTextChange() when setText to editText
+            editText.removeTextChangedListener(this);
 
             // Update text to EditText
-            editText.setText(originalText.toString());
+            editText.setText(newStr);
+
+            // Register again
+            editText.addTextChangedListener(this);
+
+            // set cursor to right position
+            editText.setSelection(selectionStart + formattedText.length());
+
+            // If only text change switch off the button
+            setOnOffById(v.getId());
         }
     }
 
     private String getFormattedStr(String str) {
-        //TODO: 1st logic here.
-        return "apple, orange";
+
+        // (normal/bold/italic) sub/super
+
+        if (isActive(R.id.bold_text) && isActive(R.id.italic_text)) return getBoldItalicStr(str);
+        if (isActive(R.id.bold_text)) return getBoldStr(str);
+        if (isActive(R.id.italic_text)) return getItalicStr(str);
+
+        return str;
+    }
+
+    private String getFormattedStr(char ch) {
+
+        // (normal/bold/italic) sub/super
+
+        if (isActive(R.id.bold_text) && isActive(R.id.italic_text)) return char2bold_italic(ch);
+        if (isActive(R.id.bold_text)) return char2bold(ch);
+        if (isActive(R.id.italic_text)) return char2italic(ch);
+        return String.valueOf(ch);
     }
 
     @Override
@@ -97,13 +132,150 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
+
     @Override
     public void onTextChanged(CharSequence s, int start, int before, int count) {
         //TODO: 2nd logic here.
+        if ((isActive(R.id.bold_text) || isActive(R.id.italic_text)))
+            try {
+                // Get string from EditText
+                StringBuilder stringBuilder = new StringBuilder(editText.getText());
+
+                // To get the last char typed in EditText
+                char typedChar = stringBuilder.charAt(start + before);
+
+                if (!Character.isDigit(typedChar) && !Character.isAlphabetic(typedChar)) return;
+
+                // string replacement
+                stringBuilder.replace(start + before, start + before + 1, getFormattedStr(typedChar));
+
+                // to protect onTextChanged() function recursion
+                editText.removeTextChangedListener(this);
+
+                // update to editText
+                editText.setText(stringBuilder.toString());
+
+                // Register again
+                editText.addTextChangedListener(this);
+
+                // set cursor to right position
+                editText.setSelection(start + before + 2);
+
+            } catch (Exception e) {
+                Log.e("onTextChanged()", e.getMessage());
+            }
     }
 
     @Override
     public void afterTextChanged(Editable s) {
 
     }
+
+    private String getBoldStr(String str) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < str.length(); i++) {
+            stringBuilder.append(char2bold(str.charAt(i)));
+        }
+        return stringBuilder.toString();
+    }
+
+    private String getItalicStr(String str) {
+
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < str.length(); i++) {
+            stringBuilder.append(char2italic(str.charAt(i)));
+        }
+        return stringBuilder.toString();
+    }
+
+    private String getBoldItalicStr(String str) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < str.length(); i++) {
+            stringBuilder.append(char2bold_italic(str.charAt(i)));
+        }
+        return stringBuilder.toString();
+
+    }
+
+    private String getUnderlineStr(String str) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < str.length(); i++) {
+            stringBuilder.append(char2underline(str.charAt(i)));
+        }
+        return stringBuilder.toString();
+    }
+
+
+    private String getSktStr(String str) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < str.length(); i++) {
+            stringBuilder.append(char2strike_through(str.charAt(i)));
+        }
+        return stringBuilder.toString();
+    }
+
+
+    private String char2bold(char ch) {
+        StringBuilder stringBuilder = new StringBuilder();
+        if (Character.isDigit(ch)) {
+            stringBuilder.append('\uD835').append((char) ('\uDFEC' - '0' + ch));
+            return stringBuilder.toString();
+        }
+        if (Character.isAlphabetic(ch)) {
+            stringBuilder.append('\uD835');
+            if (Character.isUpperCase(ch)) {
+                stringBuilder.append((char) ('\uDDD4' - 'A' + ch));
+            } else {
+                stringBuilder.append((char) ('\uDDEE' - 'a' + ch));
+            }
+            return stringBuilder.toString();
+        }
+        return String.valueOf(ch);
+    }
+
+    private String char2italic(char ch) {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        // Italic will not support for numeric alphabet.
+
+        if (Character.isAlphabetic(ch)) {
+            stringBuilder.append('\uD835');
+            if (Character.isUpperCase(ch)) {
+                stringBuilder.append((char) ('\uDE08' - 'A' + ch));
+            } else {
+                stringBuilder.append((char) ('\uDE22' - 'a' + ch));
+            }
+            return stringBuilder.toString();
+        }
+        return String.valueOf(ch);
+    }
+
+
+    private String char2bold_italic(char ch) {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        // Bold/Italic will not support for numeric alphabet.
+
+        if (Character.isAlphabetic(ch)) {
+            stringBuilder.append('\uD835');
+            if (Character.isUpperCase(ch)) {
+                stringBuilder.append((char) ('\uDE3C' - 'A' + ch));
+            } else {
+                stringBuilder.append((char) ('\uDE56' - 'a' + ch));
+            }
+            return stringBuilder.toString();
+        }
+        return String.valueOf(ch);
+    }
+
+    private String char2underline(char ch) {
+        //TODO
+        return null;
+    }
+
+    private String char2strike_through(char ch) {
+        //TODO
+        return null;
+    }
+
 }
