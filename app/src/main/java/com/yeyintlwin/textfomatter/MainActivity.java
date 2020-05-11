@@ -1,26 +1,30 @@
 package com.yeyintlwin.textfomatter;
 
+import android.annotation.SuppressLint;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, TextWatcher {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener,
+        TextWatcher, OnSelectionChangeListener, View.OnTouchListener {
 
     private final int[] BUTTONS = {R.id.bold_text, R.id.italic_text, R.id.underline_text,
             R.id.strike_through_text, R.id.super_script, R.id.sub_script};
 
-    private EditText editText;
+    int selectionTemp = 0;
 
+    private MyEditText editText;
+
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,6 +62,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
+        editText.setOnSelectionChangeListener(this);
+        editText.setOnTouchListener(this);
 
     }
 
@@ -129,41 +135,62 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
     }
-
 
     @Override
     public void onTextChanged(CharSequence s, int start, int before, int count) {
-        //TODO: 2nd logic here.
+        int selectionEnd = editText.getSelectionEnd();
+        if (selectionTemp < selectionEnd) {
+            CharSequence typedSequent = s.subSequence(selectionTemp, selectionEnd);
+            //
+
+
+        }
+        selectionTemp = selectionEnd;
+
+
+        // editText.setSelection(selectionEnd);
+
+       /* //TODO: 2nd logic here.
+        Log.d("start", start + "");
+        Log.d("before", before + "");
+
+        //int selectionStart = editText.getSelectionStart();
+
         if ((isActive(R.id.bold_text) || isActive(R.id.italic_text)))
             try {
+
                 // Get string from EditText
                 StringBuilder stringBuilder = new StringBuilder(editText.getText());
 
                 // To get the last char typed in EditText
                 char typedChar = stringBuilder.charAt(start + before);
 
-                if (!Character.isDigit(typedChar) && !Character.isAlphabetic(typedChar)) return;
+                // if (!Character.isAlphabetic(typedChar)) return;
+                //if (Character.isDigit(typedChar) && isActive(R.id.bold_text) && !isActive(R.id.italic_text))
+                //  return;
+
+                // Formatted text
+                String formattedStr = getFormattedStr(typedChar);
 
                 // string replacement
-                stringBuilder.replace(start + before, start + before + 1, getFormattedStr(typedChar));
+                String newStr = stringBuilder.replace(start, start + 1, formattedStr).toString();
 
                 // to protect onTextChanged() function recursion
                 editText.removeTextChangedListener(this);
 
                 // update to editText
-                editText.setText(stringBuilder.toString());
+                editText.setText(newStr);
 
                 // Register again
                 editText.addTextChangedListener(this);
 
                 // set cursor to right position
-                editText.setSelection(start + before + 2);
+                editText.setSelection(start + formattedStr.length());
 
             } catch (Exception e) {
                 Log.e("onTextChanged()", e.getMessage());
-            }
+            }*/
     }
 
     @Override
@@ -221,6 +248,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             stringBuilder.append('\uD835').append((char) ('\uDFEC' - '0' + ch));
             return stringBuilder.toString();
         }
+
         if (Character.isAlphabetic(ch)) {
             stringBuilder.append('\uD835');
             if (Character.isUpperCase(ch)) {
@@ -278,4 +306,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return null;
     }
 
+    @Override
+    public void onSelectionChanged(int selStart, int selEnd) {
+        selectionTemp = editText.getSelectionEnd();
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        selectionTemp = editText.getSelectionEnd();
+        return false;
+    }
 }
